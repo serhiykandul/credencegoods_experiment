@@ -1,0 +1,21 @@
+{{ block title }}
+Round {{ player.round_number }}: Price Offer
+{{ endblock }}
+
+{{ block content }}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Set Prices</h4>
+        <p class="card-text">
+            You are Player A. Please set two prices to offer to Player B.
+        </p>
+        <p class="card-text">
+            Both prices must be integers between {{ C.MIN_PRICE }} and {{ C.MAX_PRICE }} points.
+            Price 1 must be less than or equal to Price 2.
+        </p>
+        {{ formfields }}
+        {{ next_button }}
+    </div>
+</div>
+{{ endblock }}
+

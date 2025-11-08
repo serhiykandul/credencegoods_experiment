@@ -1,0 +1,51 @@
+{{ block title }}
+Final Results
+{{ endblock }}
+
+{{ block content }}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Experiment Complete</h4>
+        <p class="card-text">
+            Thank you for participating in the experiment!
+        </p>
+        <div class="alert alert-success">
+            <h5>Your Total Earnings</h5>
+            <p>
+                <strong>Total points earned: {{ total_payoff }}</strong>
+            </p>
+            <p>
+                <strong>Total in Euros: €{{ total_euros|floatformat:2 }}</strong>
+            </p>
+            <p class="text-muted">
+                Exchange rate: 1 point = 25 Euro-cents (4 points = 1 Euro)
+            </p>
+        </div>
+        
+        <h5>Round-by-Round Breakdown</h5>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Round</th>
+                    <th>Payoff (points)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for round_player in rounds %}
+                <tr>
+                    <td>{{ round_player.round_number }}</td>
+                    <td>{{ round_player.round_payoff }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-primary">
+                    <th>Total</th>
+                    <th>{{ total_payoff }} points (€{{ total_euros|floatformat:2 }})</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{{ endblock }}
+

@@ -1,0 +1,69 @@
+{{ block title }}
+Round {{ player.round_number }}: Results
+{{ endblock }}
+
+{{ block content }}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Round Results</h4>
+        
+        {% if player_role == 'A' %}
+            <p class="card-text">
+                This round is over.
+            </p>
+            <p class="card-text">
+                You offered Price 1 = <strong>{{ price1_offer }}</strong> points and Price 2 = <strong>{{ price2_offer }}</strong> points to Player B.
+            </p>
+            <p class="card-text">
+                Player B has chosen <strong>{{ interaction_text }}</strong> with you.
+            </p>
+            
+            {% if interaction %}
+                {% if action_chosen %}
+                <p class="card-text">
+                    You chose Action {{ action_chosen }} and paid Player B <strong>{{ price_paid }}</strong> points.
+                </p>
+                <p class="card-text">
+                    {% if revenue %}Your revenue: <strong>{{ revenue }}</strong> points<br>{% endif %}
+                    {% if action_cost %}Action cost: <strong>{{ action_cost }}</strong> points<br>{% endif %}
+                    {% if price_paid %}Price paid: <strong>{{ price_paid }}</strong> points<br>{% endif %}
+                </p>
+                {% endif %}
+                <p class="card-text">
+                    <strong>Your payoff for this round: {{ payoff }} points</strong>
+                </p>
+            {% else %}
+                <p class="card-text">
+                    <strong>Your payoff for this round: {{ outside_option }} point</strong> (outside option)
+                </p>
+            {% endif %}
+        {% else %}
+            <p class="card-text">
+                This round is over.
+            </p>
+            <p class="card-text">
+                Player A offered you Price 1 = <strong>{{ price1_offer }}</strong> points and Price 2 = <strong>{{ price2_offer }}</strong> points.
+            </p>
+            <p class="card-text">
+                You have chosen <strong>{{ interaction_text }}</strong> with Player A.
+            </p>
+            
+            {% if interaction %}
+                <p class="card-text">
+                    Player A paid you <strong>{{ price_paid }}</strong> points.
+                </p>
+                <p class="card-text">
+                    <strong>Your payoff for this round: {{ payoff }} points</strong>
+                </p>
+            {% else %}
+                <p class="card-text">
+                    <strong>Your payoff for this round: {{ outside_option }} point</strong> (outside option)
+                </p>
+            {% endif %}
+        {% endif %}
+        
+        {{ next_button }}
+    </div>
+</div>
+{{ endblock }}
+

@@ -1,0 +1,33 @@
+{{ block title }}
+Round {{ player.round_number }}: Choose Action
+{{ endblock }}
+
+{{ block content }}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Choose Your Action</h4>
+        <p class="card-text">
+            Player B has chosen to interact with you.
+        </p>
+        <p class="card-text">
+            <strong>Player B is of Type {{ player_b_type }}.</strong>
+        </p>
+        <div class="alert alert-info">
+            <strong>Revenue Information:</strong>
+            <ul>
+                <li>If Player B is Type 1 and you choose Action 1: Revenue = {{ C.REVENUE_1 }} points</li>
+                <li>If Player B is Type 1 and you choose Action 2: Revenue = {{ C.REVENUE_2 }} points</li>
+                <li>If Player B is Type 2: Revenue = {{ C.REVENUE_2 }} points (regardless of action)</li>
+            </ul>
+            <strong>Action Costs:</strong>
+            <ul>
+                <li>Action 1: Cost = {{ C.ACTION_1_COST }} points</li>
+                <li>Action 2: Cost = {{ C.ACTION_2_COST }} points</li>
+            </ul>
+        </div>
+        {{ formfields }}
+        {{ next_button }}
+    </div>
+</div>
+{{ endblock }}
+
