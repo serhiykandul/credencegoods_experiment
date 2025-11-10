@@ -11,7 +11,7 @@ Adapted from Dulleck et al 2011
 class C(BaseConstants):
     NAME_IN_URL = 'credencegoodsBJS'
     PLAYERS_PER_GROUP = 2  # Pairs of A and B
-    NUM_ROUNDS = 16
+    NUM_ROUNDS = 4 # for testing.
     
     # Payoff parameters
     OUTSIDE_OPTION = 1
@@ -23,6 +23,7 @@ class C(BaseConstants):
     # Price limits
     MIN_PRICE = 2
     MAX_PRICE = 10
+
     
     # Matching pattern repeats every 4 rounds
     # Pattern within each matching group (4 As and 4 Bs):
@@ -33,94 +34,35 @@ class C(BaseConstants):
 
 
 class Subsession(BaseSubsession):
-    def assign_roles(self):
-        """Assign roles to players in matching groups of 8"""
-        players = self.get_players()
-        
-        # Split into matching groups (groups of 8)
-        num_matching_groups = len(players) // 8
-        for mg in range(num_matching_groups):
-            mg_players = players[mg * 8:(mg + 1) * 8]
-            
-            # Randomly assign roles: 4 As and 4 Bs
-            roles = ['A'] * 4 + ['B'] * 4
-            random.shuffle(roles)
-            
-            # Assign roles and player IDs within matching group
-            a_count = 1
-            b_count = 1
-            for i, p in enumerate(mg_players):
-                p.player_role = roles[i]
-                if p.player_role == 'A':
-                    p.player_id_in_role = f'A{a_count}'
-                    a_count += 1
-                else:
-                    p.player_id_in_role = f'B{b_count}'
-                    b_count += 1
-                p.matching_group_id = mg + 1
-    
-    def creating_subsession(self):
-        # For round 1, create temporary groups (will be reassigned after roles are assigned)
-        # For other rounds, create pairs based on matching protocol
+    def creating_session(self):
+        players = sorted(self.get_players(), key=lambda p: p.id_in_subsession)
+
         if self.round_number == 1:
-            # Create temporary random groups (pairs) - will be reassigned after role assignment
-            players = self.get_players()
-            shuffled_players = players[:]
-            random.shuffle(shuffled_players)
-            group_matrix = []
-            for i in range(0, len(shuffled_players), 2):
-                if i + 1 < len(shuffled_players):
-                    group_matrix.append([shuffled_players[i], shuffled_players[i + 1]])
-                else:
-                    # If odd number of players, put last one in a group by themselves
-                    group_matrix.append([shuffled_players[i]])
-            self.set_group_matrix(group_matrix)
+            for player in players:
+                role = 'A' if player.id_in_subsession % 2 == 1 else 'B'
+                player.player_role = role
+                player.player_id_in_role = role
+                player.participant.vars['player_role'] = role
+                player.save()
+
+            self.group_randomly()
+            self.session.vars['round1_matrix'] = self.get_group_matrix()
         else:
-            self.create_pairs()
-    
-    def create_pairs(self):
-        """Create pairs of A and B players according to matching protocol"""
-        players = self.get_players()
-        
-        # Group players by matching group and role
-        matching_groups = {}
-        for p in players:
-            # Only process players who have been assigned a role
-            if p.player_role and p.matching_group_id:
-                if p.matching_group_id not in matching_groups:
-                    matching_groups[p.matching_group_id] = {'A': [], 'B': []}
-                matching_groups[p.matching_group_id][p.player_role].append(p)
-        
-        # Build group matrix: list of lists, where each inner list is a group (pair)
-        group_matrix = []
-        
-        # Determine matching pattern based on round number (mod 4)
-        round_pattern = (self.round_number - 1) % 4
-        
-        # Matching patterns
-        if round_pattern == 0:  # Rounds 1, 5, 9, 13
-            matches = [(0, 0), (1, 1), (2, 2), (3, 3)]
-        elif round_pattern == 1:  # Rounds 2, 6, 10, 14
-            matches = [(0, 1), (1, 2), (2, 3), (3, 0)]
-        elif round_pattern == 2:  # Rounds 3, 7, 11, 15
-            matches = [(0, 2), (1, 3), (2, 0), (3, 1)]
-        else:  # Rounds 4, 8, 12, 16
-            matches = [(0, 3), (1, 0), (2, 1), (3, 2)]
-        
-        # Create pairs according to matching protocol
-        for mg_id in sorted(matching_groups.keys()):
-            roles = matching_groups[mg_id]
-            as_players = sorted(roles['A'], key=lambda x: x.player_id_in_role)
-            bs_players = sorted(roles['B'], key=lambda x: x.player_id_in_role)
-            
-            # Create groups (pairs) based on matching pattern
-            for a_idx, b_idx in matches:
-                if a_idx < len(as_players) and b_idx < len(bs_players):
-                    # Add pair to group matrix
-                    group_matrix.append([as_players[a_idx], bs_players[b_idx]])
-        
-        # Set the group matrix to create groups
-        self.set_group_matrix(group_matrix)
+            for player in players:
+                role = player.participant.vars.get('player_role')
+                if role is None:
+                    raise RuntimeError(
+                        f"Missing stored role for participant {player.participant.code} entering round {self.round_number}."
+                    )
+                player.player_role = role
+                player.player_id_in_role = role
+                player.save()
+
+            matrix = self.session.vars.get('round1_matrix')
+            if matrix:
+                self.set_group_matrix(matrix)
+            else:
+                self.group_like_round(1)
 
 
 class Group(BaseGroup):
@@ -132,7 +74,19 @@ class Player(BasePlayer):
     player_role = models.StringField()
     player_id_in_role = models.StringField()
     matching_group_id = models.IntegerField()
-    
+
+    def ensure_role(self):
+        role = self.field_maybe_none('player_role')
+        if role is None:
+            id_in_group = self.id_in_group
+            if id_in_group is None:
+                return None
+            role = 'A' if id_in_group == 1 else 'B'
+            self.player_role = role
+            self.player_id_in_role = role
+            self.participant.vars['player_role'] = role
+        return role
+
     # Decision variables - Player A
     price1_offer = models.IntegerField(
         min=C.MIN_PRICE,
@@ -179,16 +133,37 @@ class Player(BasePlayer):
     def calculate_payoff(self):
         """Calculate payoff for this round"""
         partner = self.set_partner()
+        role = self.field_maybe_none('player_role')
+
+        if role is None:
+            raise RuntimeError(
+                f"Player {self.id_in_subsession} is missing a role in round {self.round_number}."
+            )
         
-        if self.player_role == 'A':
-            if not partner.interaction:
+        if role == 'A':
+            partner_interaction = partner.field_maybe_none('interaction')
+            if partner_interaction is None:
+                raise RuntimeError(
+                    f"Partner interaction decision missing for player {self.id_in_subsession} in round {self.round_number}."
+                )
+            if not partner_interaction:
                 # No interaction
                 self.round_payoff = C.OUTSIDE_OPTION
                 self.revenue = 0
             else:
                 # Calculate revenue based on type and action
-                if partner.player_b_type == 1:
-                    if self.action_chosen == 1:
+                partner_type = partner.field_maybe_none('player_b_type')
+                if partner_type is None:
+                    raise RuntimeError(
+                        f"Player B type missing for player {self.id_in_subsession} in round {self.round_number}."
+                    )
+                action_chosen = self.field_maybe_none('action_chosen')
+                if action_chosen is None:
+                    raise RuntimeError(
+                        f"Action choice missing for player {self.id_in_subsession} in round {self.round_number}."
+                    )
+                if partner_type == 1:
+                    if action_chosen == 1:
                         revenue = C.REVENUE_1
                     else:  # action_chosen == 2
                         revenue = C.REVENUE_2
@@ -196,26 +171,46 @@ class Player(BasePlayer):
                     revenue = C.REVENUE_2
                 
                 # Calculate costs
-                if self.action_chosen == 1:
+                if action_chosen == 1:
                     cost = C.ACTION_1_COST
-                else:
+                elif action_chosen == 2:
                     cost = C.ACTION_2_COST
+                else:
+                    raise RuntimeError(
+                        f"Invalid action choice {action_chosen} for player {self.id_in_subsession}."
+                    )
                 
                 # Final payoff
                 self.revenue = revenue
-                self.round_payoff = revenue - cost - self.price_paid
+                price_paid = self.field_maybe_none('price_paid')
+                if price_paid is None:
+                    raise RuntimeError(
+                        f"Price paid missing for player {self.id_in_subsession} in round {self.round_number}."
+                    )
+                self.round_payoff = revenue - cost - price_paid
         else:  # Player B
-            if not self.interaction:
+            interaction = self.field_maybe_none('interaction')
+            if interaction is None:
+                raise RuntimeError(
+                    f"Interaction decision missing for player {self.id_in_subsession} in round {self.round_number}."
+                )
+            if not interaction:
                 self.round_payoff = C.OUTSIDE_OPTION
             else:
-                if partner.price_paid:
-                    self.round_payoff = partner.price_paid
+                partner_price_paid = partner.field_maybe_none('price_paid')
+                if partner_price_paid is None:
+                    raise RuntimeError(
+                        f"Partner price paid missing for player {self.id_in_subsession} in round {self.round_number}."
+                    )
+                if partner_price_paid:
+                    self.round_payoff = partner_price_paid
                 else:
                     self.round_payoff = 0
     
     def validate_price1_offer(self, value):
-        if self.player_role == 'A' and hasattr(self, 'price2_offer'):
-            if self.price2_offer and value > self.price2_offer:
+        role = self.field_maybe_none('player_role')
+        price2 = self.field_maybe_none('price2_offer')
+        if role == 'A' and price2 is not None and value > price2:
                 return 'Price 1 must be less than or equal to Price 2'
         return None
 
@@ -225,8 +220,7 @@ class Welcome(Page):
     @staticmethod
     def is_displayed(player: Player):
         return player.round_number == 1
-
-
+    
 class WaitForAllPlayers(WaitPage):
     """Wait for all players to arrive before assigning roles"""
     wait_for_all_groups = True
@@ -234,26 +228,19 @@ class WaitForAllPlayers(WaitPage):
     @staticmethod
     def is_displayed(player: Player):
         return player.round_number == 1
-    
-    @staticmethod
-    def after_all_players_arrive(subsession: Subsession):
-        # Assign roles to all players
-        subsession.assign_roles()
-        # Create pairs for round 1
-        subsession.create_pairs()
 
 
 class RoleAssignment(Page):
     @staticmethod
     def is_displayed(player: Player):
         # Only display if we're in round 1 and role has been assigned
-        return player.round_number == 1 and player.player_role is not None
+        role = player.field_maybe_none('player_role')
+        return player.round_number == 1 and role is not None
     
     @staticmethod
     def vars_for_template(player: Player):
         return {
-            'player_role': player.player_role,
-            'player_id': player.player_id_in_role
+            'player_role': player.player_role
         }
 
 
@@ -263,7 +250,10 @@ class PriceOffer(Page):
     
     @staticmethod
     def is_displayed(player: Player):
-        return player.player_role == 'A'
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at PriceOffer in round {player.round_number}.")
+        return role == 'A'
     
     @staticmethod
     def error_message(player: Player, values):
@@ -274,14 +264,21 @@ class PriceOffer(Page):
     def before_next_page(player: Player, timeout_happened):
         # Store prices for partner to see
         partner = player.set_partner()
-        partner.partner_price1 = player.price1_offer
-        partner.partner_price2 = player.price2_offer
+        price1 = player.field_maybe_none('price1_offer')
+        price2 = player.field_maybe_none('price2_offer')
+        if price1 is None or price2 is None:
+            raise RuntimeError("Price offers must be submitted before leaving PriceOffer page.")
+        partner.partner_price1 = price1
+        partner.partner_price2 = price2
 
 
 class WaitForPrices(WaitPage):
     @staticmethod
     def is_displayed(player: Player):
-        return player.player_role == 'B'
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at WaitForPrices in round {player.round_number}.")
+        return role == 'B'
 
 
 class InteractionDecision(Page):
@@ -290,30 +287,50 @@ class InteractionDecision(Page):
     
     @staticmethod
     def is_displayed(player: Player):
-        return player.player_role == 'B'
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at InteractionDecision in round {player.round_number}.")
+        return role == 'B'
     
     @staticmethod
     def vars_for_template(player: Player):
         partner = player.set_partner()
+        price1 = partner.field_maybe_none('price1_offer')
+        price2 = partner.field_maybe_none('price2_offer')
+        if price1 is None or price2 is None:
+            raise RuntimeError("Partner prices missing while rendering InteractionDecision.")
         return {
-            'price1': partner.price1_offer,
-            'price2': partner.price2_offer
+            'price1': price1,
+            'price2': price2
         }
     
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
         partner = player.set_partner()
-        partner.partner_interaction = player.interaction
+        interaction = player.field_maybe_none('interaction')
+        if interaction is None:
+            raise RuntimeError("Interaction decision must be submitted before leaving the page.")
+        partner.partner_interaction = interaction
 
 
 class WaitForInteraction(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         # Assign player B type and check if interaction occurred
-        player_b = [p for p in group.get_players() if p.player_role == 'B'][0]
-        player_a = [p for p in group.get_players() if p.player_role == 'A'][0]
+        players_b = [p for p in group.get_players() if p.player_role == 'B']
+        players_a = [p for p in group.get_players() if p.player_role == 'A']
+
+        if not players_b or not players_a:
+            return
+
+        player_b = players_b[0]
+        player_a = players_a[0]
         
-        if player_b.interaction:
+        interaction = player_b.field_maybe_none('interaction')
+        if interaction is None:
+            raise RuntimeError("Player B interaction decision missing when assigning type.")
+        
+        if interaction:
             # Randomly assign type 1 or 2
             player_b.player_b_type = random.randint(1, 2)
             player_a.player_b_type = player_b.player_b_type  # Player A sees the type
@@ -326,8 +343,14 @@ class WaitForInteraction(WaitPage):
 class WaitForAction(WaitPage):
     @staticmethod
     def is_displayed(player: Player):
-        if player.player_role == 'B':
-            return player.interaction
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at WaitForAction in round {player.round_number}.")
+        if role == 'B':
+            interaction = player.field_maybe_none('interaction')
+            if interaction is None:
+                raise RuntimeError("Player B interaction decision missing before WaitForAction.")
+            return interaction
         return False
 
 
@@ -337,25 +360,47 @@ class ActionChoice(Page):
     
     @staticmethod
     def is_displayed(player: Player):
-        if player.player_role == 'A':
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at ActionChoice in round {player.round_number}.")
+        if role == 'A':
             partner = player.set_partner()
-            return partner.interaction
+            interaction = partner.field_maybe_none('interaction')
+            if interaction is None:
+                print(
+                    f"[WARNING] Partner interaction missing for player {player.id_in_subsession} "
+                    f"in round {player.round_number}. Treating as no interaction."
+                )
+                return False
+            return interaction
         return False
     
     @staticmethod
     def vars_for_template(player: Player):
         partner = player.set_partner()
+        player_b_type = player.field_maybe_none('player_b_type')
+        if player_b_type is None:
+            raise RuntimeError("Player B type missing when rendering ActionChoice.")
+        interaction = partner.field_maybe_none('interaction')
+        if interaction is None:
+            interaction = False
         return {
-            'player_b_type': player.player_b_type,
-            'interaction': partner.interaction
+            'player_b_type': player_b_type,
+            'interaction': interaction
         }
 
 
 class WaitForPricePayment(WaitPage):
     @staticmethod
     def is_displayed(player: Player):
-        if player.player_role == 'B':
-            return player.interaction
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at WaitForPricePayment in round {player.round_number}.")
+        if role == 'B':
+            interaction = player.field_maybe_none('interaction')
+            if interaction is None:
+                raise RuntimeError("Player B interaction decision missing before WaitForPricePayment.")
+            return interaction
         return False
 
 
@@ -365,84 +410,157 @@ class PricePayment(Page):
     
     @staticmethod
     def is_displayed(player: Player):
-        if player.player_role == 'A':
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role at PricePayment in round {player.round_number}.")
+        if role == 'A':
             partner = player.set_partner()
-            return partner.interaction
+            interaction = partner.field_maybe_none('interaction')
+            if interaction is None:
+                print(
+                    f"[WARNING] Partner interaction missing for player {player.id_in_subsession} "
+                    f"in round {player.round_number} before PricePayment. Treating as no interaction."
+                )
+                return False
+            return interaction
         return False
     
     @staticmethod
     def vars_for_template(player: Player):
+        price1 = player.field_maybe_none('price1_offer')
+        price2 = player.field_maybe_none('price2_offer')
+        if price1 is None or price2 is None:
+            raise RuntimeError("Price offers missing when displaying PricePayment.")
         return {
-            'price1': player.price1_offer,
-            'price2': player.price2_offer
+            'price1': price1,
+            'price2': price2
         }
     
     @staticmethod
     def error_message(player: Player, values):
-        if values['price_paid'] not in [player.price1_offer, player.price2_offer]:
-            return f'You must choose either Price 1 ({player.price1_offer} points) or Price 2 ({player.price2_offer} points)'
+        price1 = player.field_maybe_none('price1_offer')
+        price2 = player.field_maybe_none('price2_offer')
+        if values['price_paid'] not in [price1, price2]:
+            return f'You must choose either Price 1 ({price1} points) or Price 2 ({price2} points)'
     
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
         # Store for partner feedback
         partner = player.set_partner()
-        partner.partner_price_paid = player.price_paid
-        partner.partner_action = player.action_chosen
+        price_paid = player.field_maybe_none('price_paid')
+        if price_paid is None:
+            raise RuntimeError("Price paid must be selected before leaving PricePayment.")
+        partner.partner_price_paid = price_paid
+        partner.partner_action = player.field_maybe_none('action_chosen')
 
 
 class RoundResults(Page):
     @staticmethod
+    def is_displayed(player: Player):
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role when entering RoundResults.")
+        return True
+
+    @staticmethod
     def vars_for_template(player: Player):
         partner = player.set_partner()
+        role = player.field_maybe_none('player_role')
+        partner_interaction = partner.field_maybe_none('interaction')
+        player_interaction = player.field_maybe_none('interaction')
+        player_price_paid = player.field_maybe_none('price_paid')
+        partner_price_paid = partner.field_maybe_none('price_paid')
+        player_price1 = player.field_maybe_none('price1_offer')
+        player_price2 = player.field_maybe_none('price2_offer')
+        partner_price1 = partner.field_maybe_none('price1_offer')
+        partner_price2 = partner.field_maybe_none('price2_offer')
+        player_revenue = player.field_maybe_none('revenue')
+        action_chosen = player.field_maybe_none('action_chosen')
         
         # Calculate payoffs
         player.calculate_payoff()
         partner.calculate_payoff()
         
-        if player.player_role == 'A':
+        if role is None:
+            return {
+                'player_role': None,
+                'interaction': partner_interaction,
+                'payoff': player.round_payoff,
+                'outside_option': C.OUTSIDE_OPTION
+            }
+        
+        if role == 'A':
             action_cost = None
-            if partner.interaction and player.action_chosen:
-                action_cost = C.ACTION_2_COST if player.action_chosen == 2 else C.ACTION_1_COST
+            if partner_interaction and action_chosen:
+                action_cost = C.ACTION_2_COST if action_chosen == 2 else C.ACTION_1_COST
             
             return {
                 'player_role': 'A',
-                'price1_offer': player.price1_offer,
-                'price2_offer': player.price2_offer,
-                'interaction': partner.interaction,
-                'interaction_text': 'to interact' if partner.interaction else 'not to interact',
-                'price_paid': player.price_paid if (partner.interaction and player.price_paid) else None,
+                'price1_offer': player_price1,
+                'price2_offer': player_price2,
+                'interaction': partner_interaction,
+                'interaction_text': 'to interact' if partner_interaction else 'not to interact',
+                'price_paid': player_price_paid if (partner_interaction and player_price_paid) else None,
                 'payoff': player.round_payoff,
                 'outside_option': C.OUTSIDE_OPTION,
-                'revenue': player.revenue if (partner.interaction and player.revenue) else None,
+                'revenue': player_revenue if (partner_interaction and player_revenue) else None,
                 'action_cost': action_cost,
-                'action_chosen': player.action_chosen if partner.interaction else None
+                'action_chosen': action_chosen if partner_interaction else None
             }
         else:  # Player B
             return {
                 'player_role': 'B',
-                'price1_offer': partner.price1_offer,
-                'price2_offer': partner.price2_offer,
-                'interaction': player.interaction,
-                'interaction_text': 'to interact' if player.interaction else 'not to interact',
-                'price_paid': partner.price_paid if (player.interaction and partner.price_paid) else None,
+                'price1_offer': partner_price1,
+                'price2_offer': partner_price2,
+                'interaction': player_interaction,
+                'interaction_text': 'to interact' if player_interaction else 'not to interact',
+                'price_paid': partner_price_paid if (player_interaction and partner_price_paid) else None,
                 'payoff': player.round_payoff,
                 'outside_option': C.OUTSIDE_OPTION
             }
+
+class WaitForRoundResults(WaitPage):
+    wait_for_all_groups = True
+    title_text = 'Waiting'
+    body_text = 'Please wait until all participants have reviewed their round results.'
+
+    @staticmethod
+    def is_displayed(player: Player):
+        # Only needed when there is another round coming
+        role = player.ensure_role()
+        if role is None:
+            raise RuntimeError(f"Player {player.id_in_subsession} missing role when entering WaitForRoundResults.")
+        return player.round_number < C.NUM_ROUNDS
 
 
 class FinalResults(Page):
     @staticmethod
     def is_displayed(player: Player):
-        return player.round_number == C.NUM_ROUNDS
+        role = player.ensure_role()
+        if player.round_number == C.NUM_ROUNDS and role is None:
+            raise RuntimeError(
+                f"Player {player.id_in_subsession} missing role at FinalResults."
+            )
+        return player.round_number == C.NUM_ROUNDS and role is not None
     
     @staticmethod
     def vars_for_template(player: Player):
-        total_payoff = sum([p.round_payoff for p in player.in_all_rounds()])
+        round_payoffs = []
+        for past_round in player.in_all_rounds():
+            payoff = past_round.field_maybe_none('round_payoff')
+            if payoff is None:
+                raise RuntimeError(
+                    f"Round payoff missing for player {player.id_in_subsession} in round {past_round.round_number}."
+                )
+            round_payoffs.append(payoff)
+
+        total_payoff = sum(round_payoffs)
         total_euros = total_payoff * 0.25  # 1 point = 25 Euro-cents = 0.25 EUR
         
         return {
             'total_payoff': total_payoff,
             'total_euros': total_euros,
+            'total_euros_rounded': f"{total_euros:.2f}",
             'rounds': player.in_all_rounds()
         }
 
@@ -460,5 +578,6 @@ page_sequence = [
     PricePayment,
     WaitForPricePayment,
     RoundResults,
+    WaitForRoundResults,
     FinalResults
 ]

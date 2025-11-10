@@ -15,7 +15,7 @@ Final Results
                 <strong>Total points earned: {{ total_payoff }}</strong>
             </p>
             <p>
-                <strong>Total in Euros: €{{ total_euros|floatformat:2 }}</strong>
+                <strong>Total in Euros: €{{ total_euros_rounded }}</strong>
             </p>
             <p class="text-muted">
                 Exchange rate: 1 point = 25 Euro-cents (4 points = 1 Euro)
@@ -41,7 +41,7 @@ Final Results
             <tfoot>
                 <tr class="table-primary">
                     <th>Total</th>
-                    <th>{{ total_payoff }} points (€{{ total_euros|floatformat:2 }})</th>
+                    <th>{{ total_payoff }} points (€{{ total_euros_rounded }})</th>
                 </tr>
             </tfoot>
         </table>
