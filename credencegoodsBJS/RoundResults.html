@@ -21,12 +21,12 @@ Round {{ player.round_number }}: Results
             {% if interaction %}
                 {% if action_chosen %}
                 <p class="card-text">
-                    You chose Action {{ action_chosen }} and paid Player B <strong>{{ price_paid }}</strong> points.
+                    You chose Action {{ action_chosen }}{% if has_price_paid %} and paid Player B <strong>{{ price_paid }}</strong> points{% endif %}.
                 </p>
                 <p class="card-text">
-                    {% if revenue %}Your revenue: <strong>{{ revenue }}</strong> points<br>{% endif %}
+                    {% if has_revenue %}Revenue: <strong>{{ revenue }}</strong> points<br>{% endif %}
                     {% if action_cost %}Action cost: <strong>{{ action_cost }}</strong> points<br>{% endif %}
-                    {% if price_paid %}Price paid: <strong>{{ price_paid }}</strong> points<br>{% endif %}
+                    {% if has_price_paid %}Price paid: <strong>{{ price_paid }}</strong> points<br>{% endif %}
                 </p>
                 {% endif %}
                 <p class="card-text">
@@ -49,9 +49,11 @@ Round {{ player.round_number }}: Results
             </p>
             
             {% if interaction %}
+                {% if has_price_paid %}
                 <p class="card-text">
                     Player A paid you <strong>{{ price_paid }}</strong> points.
                 </p>
+                {% endif %}
                 <p class="card-text">
                     <strong>Your payoff for this round: {{ payoff }} points</strong>
                 </p>

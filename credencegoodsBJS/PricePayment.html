@@ -5,28 +5,17 @@ Round {{ player.round_number }}: Choose Price to Pay
 {{ block content }}
 <div class="card">
     <div class="card-body">
-        <h4 class="card-title">Which Price to Pay?</h4>
         <p class="card-text">
             You offered the following prices to Player B:
         </p>
-        <ul>
+        <ul class="mb-3">
             <li><strong>Price 1:</strong> {{ price1 }} points</li>
             <li><strong>Price 2:</strong> {{ price2 }} points</li>
         </ul>
-        <p class="card-text">
-            Which price do you want to pay to Player B?
-        </p>
-        <div class="alert alert-info">
-            <p class="mb-0"><strong>You must choose one of the prices you offered:</strong></p>
-            <ul class="mb-0">
-                <li><strong>Price 1:</strong> {{ price1 }} points</li>
-                <li><strong>Price 2:</strong> {{ price2 }} points</li>
-            </ul>
+        <div class="mb-3">
+            {{ form.price_paid.label }}
+            {{ form.price_paid }}
         </div>
-        <p class="card-text text-muted">
-            Enter either <strong>{{ price1 }}</strong> or <strong>{{ price2 }}</strong> in the field below.
-        </p>
-        {{ formfields }}
         {{ next_button }}
     </div>
 </div>

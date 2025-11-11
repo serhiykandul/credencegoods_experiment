@@ -57,7 +57,7 @@ class Player(BasePlayer):
         blank=True
     )
     price_paid = models.IntegerField(
-        label="Which price to pay to Player B?",
+        label="Please select the price you would like to pay to Player B",
         blank=True
     )
 
@@ -105,6 +105,17 @@ class Player(BasePlayer):
     partner_interaction = models.BooleanField()
     partner_action = models.IntegerField()
     partner_price_paid = models.IntegerField()
+
+    def price_paid_choices(self):
+        price1 = self.field_maybe_none('price1_offer')
+        price2 = self.field_maybe_none('price2_offer')
+        choices = []
+        if price1 is not None:
+            choices.append([price1, f"Pay Price 1 ({price1} points)"])
+        if price2 is not None:
+            label = "Pay Price 2" if price2 != price1 else "Pay Price"
+            choices.append([price2, f"{label} ({price2} points)"])
+        return choices
 
     def set_partner(self):
         """Get the partner player in this group"""
@@ -273,6 +284,19 @@ def creating_session(subsession: Subsession):
         player.player_id_in_role = stored_label
 
     subsession.set_group_matrix(round_matrices[subsession.round_number])
+
+
+def price_paid_choices(player: Player):
+    price1 = player.field_maybe_none('price1_offer')
+    price2 = player.field_maybe_none('price2_offer')
+    choices = []
+    if price1 is not None:
+        choices.append([price1, f"Pay Price 1 ({price1} points)"])
+    if price2 is not None and price2 != price1:
+        choices.append([price2, f"Pay Price 2 ({price2} points)"])
+    elif price2 is not None and price2 == price1 and not choices:
+        choices.append([price2, f"Pay Price ({price2} points)"])
+    return choices
 
 # PAGES
 class Welcome(Page):
@@ -579,6 +603,11 @@ class RoundResults(Page):
     def vars_for_template(player: Player):
         partner = player.set_partner()
         role = player.field_maybe_none('player_role')
+
+        # Calculate payoffs
+        player.calculate_payoff()
+        partner.calculate_payoff()
+
         partner_interaction = partner.field_maybe_none('interaction')
         player_interaction = player.field_maybe_none('interaction')
         player_price_paid = player.field_maybe_none('price_paid')
@@ -589,11 +618,7 @@ class RoundResults(Page):
         partner_price2 = partner.field_maybe_none('price2_offer')
         player_revenue = player.field_maybe_none('revenue')
         action_chosen = player.field_maybe_none('action_chosen')
-        
-        # Calculate payoffs
-        player.calculate_payoff()
-        partner.calculate_payoff()
-        
+
         if role is None:
             return {
                 'player_role': None,
@@ -613,10 +638,12 @@ class RoundResults(Page):
                 'price2_offer': player_price2,
                 'interaction': partner_interaction,
                 'interaction_text': 'to interact' if partner_interaction else 'not to interact',
-                'price_paid': player_price_paid if (partner_interaction and player_price_paid) else None,
+                'price_paid': player_price_paid if partner_interaction else None,
+                'has_price_paid': partner_interaction and player_price_paid is not None,
                 'payoff': player.round_payoff,
                 'outside_option': C.OUTSIDE_OPTION,
-                'revenue': player_revenue if (partner_interaction and player_revenue) else None,
+                'revenue': player_revenue if partner_interaction else None,
+                'has_revenue': partner_interaction and player_revenue is not None,
                 'action_cost': action_cost,
                 'action_chosen': action_chosen if partner_interaction else None
             }
@@ -627,7 +654,8 @@ class RoundResults(Page):
                 'price2_offer': partner_price2,
                 'interaction': player_interaction,
                 'interaction_text': 'to interact' if player_interaction else 'not to interact',
-                'price_paid': partner_price_paid if (player_interaction and partner_price_paid) else None,
+                'price_paid': partner_price_paid if player_interaction else None,
+                'has_price_paid': player_interaction and partner_price_paid is not None,
                 'payoff': player.round_payoff,
                 'outside_option': C.OUTSIDE_OPTION
             }
