@@ -67,6 +67,33 @@ class Player(BasePlayer):
         label="Do you want to interact with Player A?"
     )
 
+
+    # Control-quiz answers: store the user’s choice
+    cq_q1 = models.StringField(label="Question 1. What is true about the interaction between the players?", 
+    choices=[
+        ['A', 'You always interact with the same person'],
+        ['B', 'You will be re-matched with another person every round'],
+        ['C', 'You will see the unique ID of the person you interact with'],
+    ])
+    cq_q2 = models.StringField(label="Question 2. Which is the correct sequence of decisions in a round?",
+    choices=[
+        ['A', '1) Player A offers prices, 2) Player B decides whether to interact, 3) Player A chooses an Action, and 4) Player A pays the price to Player B'],
+        ['B', '1) Player B decides whether to interact, 2) Player A offers prices, 3) Player A chooses an Action, and 4) Player B pays Player A the price for the chosen Action'],
+        ['C', '1) Player A chooses whether to interact, 2) Player A offers the prices, 3) Player B chooses an Action, 4) Player B receives a Revenue'],
+    ])
+    cq_q3 = models.StringField(label="Question 3. What is true about the types of Player B?",
+    choices=[
+        ['A', 'Player B is always of Type 1 '],
+        ['B', 'Player B is always of Type 2'],
+        ['C', 'The type of Player B, Type 1 or Type 2, is defined randomly every round'],
+    ])
+    cq_q4 = models.StringField(label="Question 4. What is FALSE about the payoff of the players?",
+    choices=[
+        ['A', 'Both players always receive the same amount of points'],
+        ['B', 'Both players receive the same amount of points, i.e. 1 point, in case Player B decides not to interact'],
+        ['C', 'The payoff of Player A depends on the type of Player B and the actions of Player A'],
+        ['D', 'The payoff of Player B is defined by the prices paid by Player A'],
+    ])
     # Game state variables
     player_b_type = models.IntegerField()  # 1 or 2, randomly assigned
     revenue = models.IntegerField()  # Revenue received by Player A
@@ -252,7 +279,30 @@ class Welcome(Page):
     @staticmethod
     def is_displayed(player: Player):
         return player.round_number == 1
-    
+
+class ControlQuiz(Page):
+    form_model = 'player'
+    form_fields = ['cq_q1', 'cq_q2', 'cq_q3', 'cq_q4']
+
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.round_number == 1
+   
+    @staticmethod
+    def error_message(player: Player, values):
+        errors = {}
+        if values['cq_q1'] != 'B':  # replace 'B' with the correct option
+            errors['cq_q1'] = 'Incorrect. Please read the instructions and try again.'
+        if values['cq_q2'] != 'A':
+            errors['cq_q2'] = 'Incorrect. Please read the instructions and try again.'
+        if values['cq_q3'] != 'C':
+            errors['cq_q3'] = 'Incorrect. Please read the instructions and try again.'
+        if values['cq_q4'] != 'A':
+            errors['cq_q4'] = 'Incorrect. Please read the instructions and try again.'
+
+        if errors:
+            return errors  # Page stays until all answers are correct
+
 class WaitForAllPlayers(WaitPage):
     """Wait for all players to arrive before assigning roles"""
     wait_for_all_groups = True
@@ -626,6 +676,7 @@ class FinalResults(Page):
 page_sequence = [
     Welcome,
     WaitForAllPlayers,
+    ControlQuiz,
     RoleAssignment,
     PriceOffer,
     WaitForPrices,

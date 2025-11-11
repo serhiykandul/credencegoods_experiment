@@ -1,0 +1,36 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}Control Questions{% endblock %}
+
+{% block content %}
+<h3>Please answer all questions correctly before continuing.</h3>
+
+<form method="post">
+    {{ form.cq_q1.label }}
+    {{ form.cq_q1 }}
+    {% if form.cq_q1.errors %}
+        <p class="text-danger">{{ form.cq_q1.errors.0 }}</p>
+    {% endif %}
+
+    {{ form.cq_q2.label }}
+    {{ form.cq_q2 }}
+    {% if form.cq_q2.errors %}
+        <p class="text-danger">{{ form.cq_q2.errors.0 }}</p>
+    {% endif %}
+
+    {{ form.cq_q3.label }}
+    {{ form.cq_q3 }}
+    {% if form.cq_q3.errors %}
+        <p class="text-danger">{{ form.cq_q3.errors.0 }}</p>
+    {% endif %}
+
+    {{ form.cq_q4.label }}
+    {{ form.cq_q4 }}
+    {% if form.cq_q4.errors %}
+        <p class="text-danger">{{ form.cq_q4.errors.0 }}</p>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary mt-3">Submit</button>
+</form>
+{% endblock %}
