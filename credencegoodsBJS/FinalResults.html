@@ -1,33 +1,33 @@
 {{ block title }}
-Final Results
+Résultats finaux
 {{ endblock }}
 
 {{ block content }}
 <div class="card">
     <div class="card-body">
-        <h4 class="card-title">Experiment Complete</h4>
+        <h4 class="card-title">Expérience terminée</h4>
         <p class="card-text">
-            Thank you for participating in the experiment!
+            Merci pour votre participation à cette expérimentation !
         </p>
         <div class="alert alert-success">
-            <h5>Your Total Earnings</h5>
+            <h5>Votre gain total</h5>
             <p>
-                <strong>Total points earned: {{ total_payoff }}</strong>
+                <strong>Total de points gagnés :  {{ total_payoff }}</strong>
             </p>
             <p>
-                <strong>Total in Euros: €{{ total_euros_rounded }}</strong>
+                <strong> Total en Euros : {{ total_euros_rounded }} €</strong>
             </p>
             <p class="text-muted">
-                Exchange rate: 1 point = 25 Euro-cents (4 points = 1 Euro)
+                Taux de change : 1 point = 25 centimes d'euro (4 points = 1 Euro)
             </p>
         </div>
         
-        <h5>Round-by-Round Breakdown</h5>
+        <h5>Récapitulatif tour par tour</h5>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Round</th>
-                    <th>Payoff (points)</th>
+                    <th>Tour</th>
+                    <th>Profit (points)</th>
                 </tr>
             </thead>
             <tbody>

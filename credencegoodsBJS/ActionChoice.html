@@ -1,28 +1,28 @@
 {{ block title }}
-Round {{ player.round_number }}: Choose Action
+Tour {{ player.round_number }}: Choisir votre action
 {{ endblock }}
 
 {{ block content }}
 <div class="card">
     <div class="card-body">
-        <h4 class="card-title">Choose Your Action</h4>
+        <h4 class="card-title">Choisissez votre action</h4>
         <p class="card-text">
-            Player B has chosen to interact with you.
+            Le Joueur B a choisi d'interagir avec vous.
         </p>
         <p class="card-text">
-            <strong>Player B is of Type {{ player_b_type }}.</strong>
+            <strong>Le Joueur B est de Type {{ player_b_type }}.</strong>
         </p>
         <div class="alert alert-info">
-            <strong>Revenue Information:</strong>
+            <strong>Information sur les revenus :</strong>
             <ul>
-                <li>If Player B is Type 1 and you choose Action 1: Revenue = {{ C.REVENUE_1 }} points</li>
-                <li>If Player B is Type 1 and you choose Action 2: Revenue = {{ C.REVENUE_2 }} points</li>
-                <li>If Player B is Type 2: Revenue = {{ C.REVENUE_2 }} points (regardless of action)</li>
+                <li>Si le Joueur B est de Type 1 et que vous choisissez l'Action 1: Revenu = {{ C.REVENUE_1 }} points</li>
+                <li>Si le Joueur B est de Type 1 et que vous choisissez l'Action 2: Revenu =  {{ C.REVENUE_2 }} points</li>
+                <li>Si le joueur B est de Type 2 : Revenu = {{ C.REVENUE_2 }} points (quelle que soit l'Action choisie)</li>
             </ul>
-            <strong>Action Costs:</strong>
+            <strong>Coût de l'Action :</strong>
             <ul>
-                <li>Action 1: Cost = {{ C.ACTION_1_COST }} points</li>
-                <li>Action 2: Cost = {{ C.ACTION_2_COST }} points</li>
+                <li>Action 1: Coût  = {{ C.ACTION_1_COST }} point</li>
+                <li>Action 2: Coût  = {{ C.ACTION_2_COST }} points</li>
             </ul>
         </div>
         {{ formfields }}
@@ -31,3 +31,5 @@ Round {{ player.round_number }}: Choose Action
 </div>
 {{ endblock }}
 
+            
+   

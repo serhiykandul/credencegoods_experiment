@@ -2,11 +2,10 @@
 
 {% load otree static %}
 
-{% block title %}Control Questions{% endblock %}
+{% block title %}Questions de Contrôle{% endblock %}
 
 {% block content %}
-<h3>Please answer all questions correctly before continuing.</h3>
-
+<h3>Vous allez maintenant devoir répondre à quelques questions, afin de vérifier que vous avez bien compris le déroulement de l'expérience.</h3>
 <form method="post">
     <div class="mb-3">
         <label class="form-label">{{ form.cq_q1.label }}</label>
@@ -40,6 +39,6 @@
         {% endif %}
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    <button type="submit" class="btn btn-primary mt-3">Envoyer</button>
 </form>
 {% endblock %}
