@@ -513,7 +513,12 @@ class ActionChoice(Page):
                 )
             return interaction
         return False
-    
+
+    @staticmethod
+    def error_message(player: Player, values):
+        if values.get('action_chosen') is None:
+            return 'Veuillez sélectionner une action avant de continuer.'
+
     @staticmethod
     def vars_for_template(player: Player):
         partner = player.set_partner()
@@ -523,9 +528,33 @@ class ActionChoice(Page):
         interaction = partner.field_maybe_none('interaction')
         if interaction is None:
             interaction = False
+
+        if player_b_type == 1:
+            revenue_action_1 = C.REVENUE_1
+            revenue_action_2 = C.REVENUE_2
+        else:
+            revenue_action_1 = C.REVENUE_2
+            revenue_action_2 = C.REVENUE_2
+
+        action_info = [
+            {
+                'label': 'Action 1',
+                'cost': C.ACTION_1_COST,
+                'revenue': revenue_action_1,
+                'net_gain': revenue_action_1 - C.ACTION_1_COST,
+            },
+            {
+                'label': 'Action 2',
+                'cost': C.ACTION_2_COST,
+                'revenue': revenue_action_2,
+                'net_gain': revenue_action_2 - C.ACTION_2_COST,
+            },
+        ]
+
         return {
             'player_b_type': player_b_type,
-            'interaction': interaction
+            'interaction': interaction,
+            'action_info': action_info,
         }
 
 
@@ -697,7 +726,7 @@ class FinalResults(Page):
             round_payoffs.append(payoff)
 
         total_payoff = sum(round_payoffs)
-        total_euros = total_payoff * 0.25  # 1 point = 25 Euro-cents = 0.25 EUR
+        total_euros = total_payoff.to_real_world_currency(player.session)  # 1 point = 25 Euro-cents = 0.25 EUR
         
         return {
             'total_payoff': total_payoff,
