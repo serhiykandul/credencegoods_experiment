@@ -12,10 +12,17 @@ Résultats finaux
         <div class="alert alert-success">
             <h5>Votre gain total</h5>
             <p>
-                <strong>Total de points gagnés :  {{ total_payoff }}</strong>
+                <strong>Total de points gagnés : {{ total_payoff }}</strong>
             </p>
             <p>
-                <strong> Total en Euros : {{ total_euros_rounded }} €</strong>
+                <strong>Gain variable converti : {{ total_euros_rounded }} €</strong>
+            </p>
+            <p>
+                <strong>Indemnité de participation : {{ participation_fee_rounded }} €</strong>
+            </p>
+            <hr>
+            <p>
+                <strong>Paiement total (variable + indemnité) : {{ total_payment_rounded }} €</strong>
             </p>
             <p class="text-muted">
                 Taux de change : 1 point = 25 centimes d'euro (4 points = 1 Euro)
@@ -48,4 +55,5 @@ Résultats finaux
     </div>
 </div>
 {{ endblock }}
+
 

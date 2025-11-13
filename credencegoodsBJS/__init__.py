@@ -24,7 +24,7 @@ class C(BaseConstants):
 
     # Price limits
     MIN_PRICE = 2
-    MAX_PRICE = 10
+    MAX_PRICE = 9 # changed from 10 to 9 to avoid a possibility of negative payoffs
 
 
 class Subsession(BaseSubsession):
@@ -57,47 +57,50 @@ class Player(BasePlayer):
         blank=True
     )
     price_paid = models.IntegerField(
-        label="Veuillez sélectionner le prix que vous souhaitez payer au Joueur B.",
+        label="Quel prix allez-vous payer au Joueur B ?",
         blank=True
     )
 
     # Decision variables - Player B
     interaction = models.BooleanField(
         choices=[[True, 'Oui'], [False, 'Non']],
-        label="Voulez-vous interagir avec le Joueur A ?"
-    )
-
-
+            )
     # Control-quiz answers: store the user’s choice
-    cq_q1 = models.StringField(label="Question 1. Quelle est la réponse juste à propos des interactions entre les joueurs ?", 
+    cq_q1 = models.StringField(label="Question 1. Qu'est-ce qui est vrai concernant l'interaction entre les joueurs ?",
     choices=[
         ['A', 'Vous interagissez toujours avec la même personne'],
-        ['B', 'Vous allez interagir avec une autre personne à chaque tour'],
-        ['C', 'Vous verrez l\'identifiant unique de la personne avec qui vous allez interagir'],
+        ['B', 'Vous serez réappairé avec une autre personne à chaque tour'],
+        ['C', 'Vous verrez l’identifiant unique de la personne avec laquelle vous interagissez'],
     ])
-    cq_q2 = models.StringField(label="Question 2. Quelle est la séquence de décision correcte dans un tour ?",
+    cq_q2 = models.StringField(label="Question 2. Quelle est la séquence correcte des décisions dans un tour ?",
     choices=[
-        ['A', '1) Le Joueur A propose des prix, 2) Le Joueur B décide s\'il interagit ou non, 3) Le Joueur A choisit une Action, et 4) Le Joueur A paye le prix à Le Joueur B'], 
-        ['B', '1) Le Joueur B décide s\'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur A choisit une Action, et 4) Le Joueur B paye au Joueur A le prix de l\'action choisie'],
-        ['C', '1) Le Joueur A décide s\'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur B choisit une Action, 4) Le Joueur B reçoit un revenu'],
-    ])   
-    cq_q3 = models.StringField(label="Question 3. Quelle est la réponse vraie à propos des types du Joueur B ?",
+        ['A', '1) Le Joueur A propose les prix, 2) Le Joueur B décide d’interagir, 3) Le Joueur A choisit une action, 4) Le Joueur A paie le prix au Joueur B'],
+        ['B', '1) Le Joueur B décide d’interagir, 2) Le Joueur A propose les prix, 3) Le Joueur A choisit une action, 4) Le Joueur B paie le Joueur A'],
+        ['C', '1) Le Joueur A choisit d’interagir, 2) Le Joueur A propose les prix, 3) Le Joueur B choisit une action, 4) Le Joueur B reçoit un revenu'],
+    ])
+    cq_q3 = models.StringField(label="Question 3. Qu’est-ce qui est vrai concernant les types du Joueur B ?",
     choices=[
         ['A', 'Le Joueur B est toujours de Type 1'],
         ['B', 'Le Joueur B est toujours de Type 2'],
         ['C', 'Le type du Joueur B, Type 1 ou Type 2, est défini aléatoirement à chaque tour'],
     ])
-    cq_q4 = models.StringField(label="Question 4. Qu'est-ce qui est FAUX à propos du profit des joueurs ",
+    cq_q4 = models.StringField(label="Question 4. Qu’est-ce qui est FAUX concernant les gains des joueurs ?",
     choices=[
-        ['A', 'Les deux joueurs reçoivent toujours la même quantité de points'],
-        ['B', 'Les deux joueurs reçoivent la même quantité de points, c\'est-à-dire 1 point, dans le cas où le Joueur B décide de ne pas interagir'],
-        ['C', 'Le profit du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
-        ['D', 'Le profit du Joueur B est défini par les prix payés par le Joueur A'],
+        ['A', 'Les deux joueurs reçoivent toujours le même nombre de points'],
+        ['B', 'Les deux joueurs reçoivent le même gain, soit 1 point, si le Joueur B décide de ne pas interagir'],
+        ['C', 'Le gain du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
+        ['D', 'Le gain du Joueur B dépend du prix payé par le Joueur A'],
     ])
     # Game state variables
     player_b_type = models.IntegerField()  # 1 or 2, randomly assigned
     revenue = models.IntegerField()  # Revenue received by Player A
     round_payoff = models.CurrencyField()  # Payoff for this round
+
+    # Totals for payments
+    total_payoff_points = models.FloatField(initial=0)
+    total_payoff_euros = models.FloatField(initial=0)
+    participation_fee = models.FloatField(initial=0)
+    total_payment = models.FloatField(initial=0)
 
     # For feedback display
     partner_price1 = models.IntegerField()
@@ -141,6 +144,7 @@ class Player(BasePlayer):
                 # No interaction
                 self.round_payoff = C.OUTSIDE_OPTION
                 self.revenue = 0
+                self.payoff = cu(self.round_payoff)
             else:
                 # Calculate revenue based on type and action
                 partner_type = partner.field_maybe_none('player_b_type')
@@ -160,7 +164,7 @@ class Player(BasePlayer):
                         revenue = C.REVENUE_2
                 else:  # player_b_type == 2
                     revenue = C.REVENUE_2
-
+                
                 # Calculate costs
                 if action_chosen == 1:
                     cost = C.ACTION_1_COST
@@ -170,7 +174,7 @@ class Player(BasePlayer):
                     raise RuntimeError(
                         f"Invalid action choice {action_chosen} for player {self.id_in_subsession}."
                     )
-
+                
                 # Final payoff
                 self.revenue = revenue
                 price_paid = self.field_maybe_none('price_paid')
@@ -179,6 +183,7 @@ class Player(BasePlayer):
                         f"Price paid missing for player {self.id_in_subsession} in round {self.round_number}."
                     )
                 self.round_payoff = revenue - cost - price_paid
+                self.payoff = cu(self.round_payoff)
         else:  # Player B
             interaction = self.field_maybe_none('interaction')
             if interaction is None:
@@ -187,6 +192,7 @@ class Player(BasePlayer):
                 )
             if not interaction:
                 self.round_payoff = C.OUTSIDE_OPTION
+                self.payoff = cu(self.round_payoff)
             else:
                 partner_price_paid = partner.field_maybe_none('price_paid')
                 if partner_price_paid is None:
@@ -197,6 +203,7 @@ class Player(BasePlayer):
                     self.round_payoff = partner_price_paid
                 else:
                     self.round_payoff = 0
+                self.payoff = cu(self.round_payoff)
 
     def validate_price1_offer(self, value):
         role = self.field_maybe_none('player_role')
@@ -727,13 +734,35 @@ class FinalResults(Page):
 
         total_payoff = sum(round_payoffs)
         total_euros = total_payoff.to_real_world_currency(player.session)  # 1 point = 25 Euro-cents = 0.25 EUR
-        
+        participation_fee = player.session.config.get('participation_fee', 0)
+        total_payment = total_euros + participation_fee
+
+        # Store for CSV export / Monitor
+        player.total_payoff_points = float(total_payoff)
+        player.total_payoff_euros = float(total_euros)
+        player.participation_fee = float(participation_fee)
+        player.total_payment = float(total_payment)
+ 
         return {
             'total_payoff': total_payoff,
             'total_euros': total_euros,
             'total_euros_rounded': f"{total_euros:.2f}",
+            'participation_fee': participation_fee,
+            'participation_fee_rounded': f"{participation_fee:.2f}",
+            'total_payment': total_payment,
+            'total_payment_rounded': f"{total_payment:.2f}",
             'rounds': player.in_all_rounds()
         }
+
+
+class WaitForFinalResults(WaitPage):
+    wait_for_all_groups = True
+    title_text = "En attente"
+    body_text = "Veuillez patienter pendant que tous les participants consultent les résultats finaux."
+
+    @staticmethod
+    def is_displayed(player: Player):
+        return player.round_number == C.NUM_ROUNDS
 
 
 page_sequence = [
@@ -751,5 +780,6 @@ page_sequence = [
     WaitForPricePayment,
     RoundResults,
     WaitForRoundResults,
+    WaitForFinalResults,
     FinalResults
 ]
