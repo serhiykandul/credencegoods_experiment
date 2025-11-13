@@ -74,9 +74,9 @@ class Player(BasePlayer):
     ])
     cq_q2 = models.StringField(label="Question 2. Quelle est la séquence correcte des décisions dans un tour ?",
     choices=[
-        ['A', '1) Le Joueur A propose les prix, 2) Le Joueur B décide d’interagir, 3) Le Joueur A choisit une action, 4) Le Joueur A paie le prix au Joueur B'],
-        ['B', '1) Le Joueur B décide d’interagir, 2) Le Joueur A propose les prix, 3) Le Joueur A choisit une action, 4) Le Joueur B paie le Joueur A'],
-        ['C', '1) Le Joueur A choisit d’interagir, 2) Le Joueur A propose les prix, 3) Le Joueur B choisit une action, 4) Le Joueur B reçoit un revenu'],
+        ['A', '1) Le Joueur A propose des prix, 2) Le Joueur B décide s\'il interagit ou non, 3) Le Joueur A choisit une Action, 4) Le Joueur A paye le prix proposé au Joueur B'],
+        ['B', '1) Le Joueur B décide s\'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur A choisit une Action, 4) Le Joueur A paye le prix proposé au Joueur B'],
+        ['C', '1) Le Joueur A choisit décide s\'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur B choisit une Action, 4) Le Joueur B reçoit un Revenu'],
     ])
     cq_q3 = models.StringField(label="Question 3. Qu’est-ce qui est vrai concernant les types du Joueur B ?",
     choices=[
