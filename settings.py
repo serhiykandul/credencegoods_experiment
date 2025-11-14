@@ -3,7 +3,12 @@ from os import environ
 SESSION_CONFIGS = [
     dict(
         name='credencegoods_baseline',
-        app_sequence=['credencegoodsBJS'],
+        app_sequence=['credencegoodsBJS','demographics'],
+        num_demo_participants=16,
+    ),
+    dict(
+        name='credencegoods_exogenous',
+        app_sequence=['credencegoodsBJS_Exo','demographics'],
         num_demo_participants=16,
     ),
 ]

@@ -11,7 +11,7 @@ Adapted from Dulleck et al 2011
 class C(BaseConstants):
     NAME_IN_URL = 'credencegoodsBJS'
     PLAYERS_PER_GROUP = 2  # Pairs of A and B
-    NUM_ROUNDS = 4  # for testing.
+    NUM_ROUNDS = 16  # change to 16 for real session.
 
     MARKET_SIZE = 8  # players per matching group (“market”)
 
@@ -66,30 +66,31 @@ class Player(BasePlayer):
         choices=[[True, 'Oui'], [False, 'Non']],
             )
     # Control-quiz answers: store the user’s choice
-    cq_q1 = models.StringField(label="Question 1. Qu'est-ce qui est vrai concernant l'interaction entre les joueurs ?",
+
+    cq_q1 = models.StringField(label="Question 1. Quelle affirmation au sujet des interactions entre joueurs est correcte ?",
     choices=[
         ['A', 'Vous interagissez toujours avec la même personne'],
-        ['B', 'Vous serez réappairé avec une autre personne à chaque tour'],
-        ['C', 'Vous verrez l’identifiant unique de la personne avec laquelle vous interagissez'],
+        ['B', 'Vous allez interagir avec une autre personne à chaque tour'],
+        ['C', 'Vous verrez l\'identifiant unique de la personne avec qui vous allez interagir'],
     ])
-    cq_q2 = models.StringField(label="Question 2. Quelle est la séquence correcte des décisions dans un tour ?",
+    cq_q2 = models.StringField(label="Question 2. Quel est l'ordre correct des décisions pendant un tour ?",
     choices=[
-        ['A', '1) Le Joueur A propose des prix, 2) Le Joueur B décide s\'il interagit ou non, 3) Le Joueur A choisit une Action, 4) Le Joueur A paye le prix proposé au Joueur B'],
-        ['B', '1) Le Joueur B décide s\'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur A choisit une Action, 4) Le Joueur A paye le prix proposé au Joueur B'],
-        ['C', '1) Le Joueur A choisit décide s\'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur B choisit une Action, 4) Le Joueur B reçoit un Revenu'],
+        ['A', "1) Le Joueur A propose deux prix, 2) Le Joueur B décide s'il interagit ou non, 3) Le Joueur A observe le type du Joueur B et choisit une action, 4) Le Joueur A paye l'un des prix proposés au Joueur B"],
+        ['B', "1) Le Joueur B décide s'il interagit ou non, 2) Le Joueur A propose deux prix, 3) Le Joueur A observe le type du Joueur B et choisit une action, 4) Le Joueur B paye au Joueur A le prix de l'action choisie"],
+        ['C', "1) Le Joueur A décide s'il interagit ou non, 2) Le Joueur A propose deux prix, 3) Le Joueur B choisit une action, 4) Le Joueur B reçoit un revenu"],
     ])
-    cq_q3 = models.StringField(label="Question 3. Qu’est-ce qui est vrai concernant les types du Joueur B ?",
+    cq_q3 = models.StringField(label="Question 3. Quelle est la bonne réponse concernant les types du Joueur B ?",
     choices=[
         ['A', 'Le Joueur B est toujours de Type 1'],
         ['B', 'Le Joueur B est toujours de Type 2'],
-        ['C', 'Le type du Joueur B, Type 1 ou Type 2, est défini aléatoirement à chaque tour'],
+        ['C', 'Le type du Joueur B, Type 1 ou Type 2, est attribué aléatoirement à chaque tour'],
     ])
-    cq_q4 = models.StringField(label="Question 4. Qu’est-ce qui est FAUX concernant les gains des joueurs ?",
+    cq_q4 = models.StringField(label="Question 4. Question 4. Qu'est-ce qui est FAUX à propos du profit des joueurs ?",
     choices=[
-        ['A', 'Les deux joueurs reçoivent toujours le même nombre de points'],
-        ['B', 'Les deux joueurs reçoivent le même gain, soit 1 point, si le Joueur B décide de ne pas interagir'],
-        ['C', 'Le gain du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
-        ['D', 'Le gain du Joueur B dépend du prix payé par le Joueur A'],
+        ['A', 'Les deux joueurs reçoivent toujours la même quantité de points'],
+        ['B', 'Les deux joueurs reçoivent la même quantité de points, c\'est-à-dire 1 point, dans le cas où le Joueur B décide de ne pas interagir'],
+        ['C', 'Le profit du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
+        ['D', 'Le profit du Joueur B est défini par les prix payés par le Joueur A.'],
     ])
     # Game state variables
     player_b_type = models.IntegerField()  # 1 or 2, randomly assigned

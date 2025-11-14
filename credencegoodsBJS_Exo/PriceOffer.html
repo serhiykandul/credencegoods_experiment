@@ -1,0 +1,23 @@
+{{ block title }}
+Tour {{ player.round_number }}: Offre de prix
+{{ endblock }}
+
+{{ block content }}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Définissez des prix</h4>
+        <p class="card-text">
+            Vous êtes un Joueur A. Veuillez définir deux prix à offrir au Joueur B.
+        </p>
+        <p class="card-text">
+            Les deux prix doivent être des nombres entiers compris entre {{ C.MIN_PRICE }} et {{ C.MAX_PRICE }} points.
+            Le Prix 1 doit être plus petit ou égal au Prix 2.
+        </p>
+        {{ formfields }}
+        {{ next_button }}
+    </div>
+</div>
+{{ endblock }}
+
+        
+

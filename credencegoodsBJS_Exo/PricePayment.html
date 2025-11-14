@@ -1,0 +1,23 @@
+{{ block title }}
+Tour {{ player.round_number }}: Choisir le prix à payer
+{{ endblock }}
+
+{{ block content }}
+<div class="card">
+    <div class="card-body">
+        <p class="card-text">
+            Vous avez offert les prix suivants au Joueur B :
+        </p>
+        <ul class="mb-3">
+            <li><strong>Prix 1:</strong> {{ price1 }} points</li>
+            <li><strong>Prix 2:</strong> {{ price2 }} points</li>
+        </ul>
+        <div class="mb-3">
+            {{ form.price_paid.label }}
+            {{ form.price_paid }}
+        </div>
+        {{ next_button }}
+    </div>
+</div>
+{{ endblock }}
+

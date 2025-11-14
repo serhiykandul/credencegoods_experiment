@@ -1,0 +1,34 @@
+{% extends "global/Page.html" %}
+
+{% block title %}Tour {{ player.round_number }} : Choisissez une action{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Choisissez une action</h4>
+        <p class="card-text">
+            <strong>Le joueur B est du Type {{ player_b_type }}</strong>.
+        </p>
+        <div class="alert alert-info">
+            <strong>Infromation sur les revenues :</strong>
+            <ul>
+                <li>Si le Joueur B est de Type 1 et que vous choisissez l'Action 1: Revenu = {{ C.REVENUE_1 }} points</li>
+                <li>Si le Joueur B est de Type 1 et que vous choisissez l'Action 2: Revenu =  {{ C.REVENUE_2 }} points</li>
+                <li>Si le Joueur B est de Type 2 et que vous choisissez l'Action 1 ou l'Action 2: Revenu =  {{ C.REVENUE_2 }} points</li>
+            </ul>
+            <strong>Coût des actions :</strong>
+            <ul>
+                <li>Action 1: Coût = {{ C.ACTION_1_COST }} point</li>
+                <li>Action 2: Coût = {{ C.ACTION_2_COST }} points</li>
+            </ul>
+        </p
+        <form method="post">
+            {{ formfield 'action_chosen' }}
+            {{ next_button }}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+            
+   
