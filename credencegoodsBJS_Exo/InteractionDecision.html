@@ -7,18 +7,18 @@ Tour {{ player.round_number }}: Choix de l'interaction
     <div class="card-body">
         <h4 class="card-title">Choix de l'interaction</h4>
         <p class="card-text">
-            Les prix disponibles pour ce tour sont :
+            Les prix pour ce tour ont été aléatoirement tirés:
         </p>
         <ul>
             <li><strong>Prix 1 :</strong> {{ price1 }} points</li>
             <li><strong>Prix 2 :</strong> {{ price2 }} points</li>
         </ul>
         <p class="card-text">
-            Si vous choisissez d'interagir :
+            Si vous choisissez d'interagir, vous recevrez le prix suivant de la part du Joueur A :
         </p>
         <ul>
-            <li>Si vous êtes de type 1, le Joueur A paiera <strong>{{ price1 }} points</strong>.</li>
-            <li>Si vous êtes de type 2, le Joueur A paiera <strong>{{ price2 }} points</strong>.</li>
+            <li><strong>{{ price1 }} points</strong> si vous êtes de Type 1 ;</li>
+            <li><strong>{{ price2 }} points</strong> si vous êtes de Type 2.</li>
         </ul>
         <p class="card-text text-muted">
             Si vous choisissez de ne pas interagir, vous et le Joueur A recevrez {{ C.OUTSIDE_OPTION }} point pour ce tour.

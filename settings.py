@@ -19,7 +19,7 @@ SESSION_CONFIGS = [
 # e.g. self.session.config['participation_fee']
 
 SESSION_CONFIG_DEFAULTS = dict(
-    real_world_currency_per_point=0.25, participation_fee=5.00, doc=""  # 1 point = 25 Euro-cents
+    real_world_currency_per_point=1/7, participation_fee=5.00, doc=""  # 7 points = 1 EUR
 )
 
 PARTICIPANT_FIELDS = []

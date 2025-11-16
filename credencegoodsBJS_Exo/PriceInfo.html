@@ -1,21 +1,20 @@
 {{ block title }}
-Tour {{ player.round_number }} : Prix exogènes
+Tour {{ player.round_number }} : Prix determinés 
 {{ endblock }}
 
 {{ block content }}
 <div class="card">
     <div class="card-body">
-        <h4 class="card-title">Prix fixés par l'expérimentateur</h4>
+        <h4 class="card-title">Les prix de votre paire</h4>
         <p class="card-text">
-            Les prix pour ce tour sont prédéterminés. Ils sont identiques pour tous les joueurs au sein de votre marché.
+            Les prix pour ce tour ont été aléatoirement tirés parmi les paires possibles.
+            
         </p>
         <ul class="mb-3">
             <li><strong>Prix 1 :</strong> {{ price1 }} points</li>
             <li><strong>Prix 2 :</strong> {{ price2 }} points</li>
         </ul>
-        <p class="card-text">
-            Si votre partenaire est de type 1, vous paierez automatiquement <strong>{{ price1 }} points</strong> au Joueur B.
-            S'il est de type 2, vous paierez automatiquement <strong>{{ price2 }} points</strong>.
+        
         </p>
         {{ next_button }}
     </div>

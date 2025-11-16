@@ -11,7 +11,7 @@ Adapted from Dulleck et al. (2011)
 class C(BaseConstants):
     NAME_IN_URL = 'credencegoodsBJS_Exo'
     PLAYERS_PER_GROUP = 2
-    NUM_ROUNDS = 16
+    NUM_ROUNDS = 16  #lower this number for testing.
     MARKET_SIZE = 8
 
     OUTSIDE_OPTION = 1
@@ -21,8 +21,9 @@ class C(BaseConstants):
     ACTION_1_COST = 1
 
     PRICE_VECTORS = [
-        dict(price1=2, price2=3, condition='unfair'),
-        dict(price1=5, price2=7, condition='fair'),
+        dict(price1=2, price2=3, condition='écart faible'),
+        dict(price1=2, price2=7, condition='écart moyen'),
+        dict(price1=4, price2=7, condition='écart élevé'),
     ]
 
 
@@ -61,29 +62,29 @@ class Player(BasePlayer):
         label="Question 1. Qu'est-ce qui est vrai concernant l'interaction entre les joueurs ?",
         choices=[
             ['A', 'Vous interagissez toujours avec la même personne'],
-            ['B', 'Vous serez réappairé avec une autre personne à chaque tour'],
-            ['C', 'Vous verrez l’identifiant unique de la personne avec laquelle vous interagissez'],
+            ['B', 'Vous allez interagir avec une autre personne à chaque tour'],
+            ['C', 'Vous verrez l’identifiant unique de la personne avec qui vous allez interagir'],
         ],
     )
-    cq_q2 = models.StringField(label="Question 2. Quelle est la séquence correcte des décisions dans un tour ?",
+    cq_q2 = models.StringField(label="Question 2. Quelle est l’ordre correct des d´ecisions pendant un tour ?",
     choices=[
-        ['A', "1) Le Joueur A propose des prix, 2) Le Joueur B décide s'il interagit ou non, 3) Le Joueur A choisit une action, 4) Le Joueur A paye le prix proposé au Joueur B"],
-        ['B', "1) Le Joueur B décide s'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur A choisit une action, 4) Le Joueur B paye le Joueur A pour l'action choisie"],
-        ['C', "1) Le Joueur A décide s'il interagit ou non, 2) Le Joueur A propose des prix, 3) Le Joueur B choisit une action, 4) Le Joueur B reçoit un revenu"],
+        ['A', "0) Les prix sont annoncés, 1) Le Joueur B décide s'il interagit ou non, et 2) Le Joueur A choisit une Action"],
+        ['B', "0) Le Joueur B décide s'il interagit ou non, 1) Les prix sont annoncés, 2) Le Joueur A choisit une Action"],
+        ['C', "0) Le Joueur A décide s'il interagit ou non, 1) Les prix sont annoncés, 2) Le Joueur B choisit une Action"],
     ])
     cq_q3 = models.StringField(
-        label="Question 3. Qu’est-ce qui est vrai concernant les types du Joueur B ?",
+        label="Question 3.Quelle est la bonne réponse concernant les types du Joueur B ?",
         choices=[
             ['A', 'Le Joueur B est toujours de Type 1'],
             ['B', 'Le Joueur B est toujours de Type 2'],
-            ['C', 'Le type du Joueur B, Type 1 ou Type 2, est défini aléatoirement à chaque tour'],
+            ['C', 'Le type du Joueur B, Type 1 ou Type 2, est attribué aléatoirement à chaque tour'],
         ],
     )
     cq_q4 = models.StringField(
-        label="Question 4. Qu’est-ce qui est FAUX concernant les gains des joueurs ?",
+        label="Question 4. Qu’est-ce qui est FAUX à propos du gain des joueurs",
         choices=[
             ['A', 'Les deux joueurs reçoivent toujours le même nombre de points'],
-            ['B', 'Les deux joueurs reçoivent le même gain, soit 1 point, si le Joueur B décide de ne pas interagir'],
+            ['B', 'Les deux joueurs reçoivent le même gain, c\'est-à-dire 1 point, dans le cas où le Joueur B décide de ne pas interagir'],
             ['C', 'Le gain du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
             ['D', 'Le gain du Joueur B dépend du prix payé par le Joueur A'],
         ],
@@ -227,16 +228,6 @@ def creating_session(subsession: Subsession):
 
         session.vars['round_matrices'] = round_matrices
 
-        repeats, remainder = divmod(C.NUM_ROUNDS, len(C.PRICE_VECTORS))
-        if remainder != 0:
-            raise RuntimeError(
-                f"NUM_ROUNDS ({C.NUM_ROUNDS}) must be a multiple of the number of price vectors ({len(C.PRICE_VECTORS)})."
-            )
-        price_schedule = C.PRICE_VECTORS * repeats
-        rng_prices = random.Random(f"{session.code}-exo-prices")
-        rng_prices.shuffle(price_schedule)
-        session.vars['exo_price_schedule'] = price_schedule
-
     round_matrices = session.vars.get('round_matrices')
     if not round_matrices:
         raise RuntimeError("Round matrices missing in session vars.")
@@ -255,20 +246,27 @@ def creating_session(subsession: Subsession):
 
     subsession.set_group_matrix(round_matrices[subsession.round_number])
 
-    price_schedule = session.vars.get('exo_price_schedule')
-    if not price_schedule:
-        raise RuntimeError("Price schedule missing in session vars.")
-
-    current_prices = price_schedule[subsession.round_number - 1]
-    condition = current_prices['condition']
-    for player in subsession.get_players():
-        player.price1_offer = current_prices['price1']
-        player.price2_offer = current_prices['price2']
-        player.price_paid = None
-        player.condition_price = condition
+    groups = subsession.get_groups()
+    num_groups = len(groups)
+    vector_pool = []
+    while len(vector_pool) < num_groups:
+        vector_pool.extend(C.PRICE_VECTORS)
+    rng_prices = random.Random(f"{session.code}-prices-{subsession.round_number}")
+    rng_prices.shuffle(vector_pool)
+    for group, vector in zip(groups, vector_pool[:num_groups]):
+        price1 = vector['price1']
+        price2 = vector['price2']
+        condition = vector['condition']
+        for player in group.get_players():
+            player.price1_offer = price1
+            player.price2_offer = price2
+            player.price_paid = None
+            player.condition_price = condition
 
 
 class Welcome(Page):
+    next_button_text = 'Suivant'
+
     @staticmethod
     def is_displayed(player: Player):
         return player.round_number == 1
@@ -418,7 +416,8 @@ class ActionChoice(Page):
 
     @staticmethod
     def error_message(player: Player, values):
-        if values.get('action_chosen') is None:
+        choice = values.get('action_chosen')
+        if choice not in [1, 2]:
             return 'Veuillez sélectionner une action avant de continuer.'
 
     @staticmethod
@@ -455,6 +454,8 @@ class ActionChoice(Page):
             player_b_type=player_b_type,
             interaction=interaction,
             action_info=action_info,
+            price1_offer=player.field_maybe_none('price1_offer'),
+            price2_offer=player.field_maybe_none('price2_offer'),
         )
 
 
@@ -473,8 +474,10 @@ class WaitForAction(WaitPage):
         interaction = seller.field_maybe_none('interaction')
         if interaction is None:
             raise RuntimeError("Player B interaction decision missing before WaitForAction.")
-        if interaction and buyer.field_maybe_none('action_chosen') is None:
-            raise RuntimeError("Player A action choice missing before releasing WaitForAction.")
+        if interaction:
+            action = buyer.field_maybe_none('action_chosen')
+            if action not in [1, 2]:
+                raise RuntimeError("Player A action choice missing before releasing WaitForAction.")
 
 
 class RoundResults(Page):

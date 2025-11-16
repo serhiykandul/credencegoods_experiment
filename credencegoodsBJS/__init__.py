@@ -11,7 +11,7 @@ Adapted from Dulleck et al 2011
 class C(BaseConstants):
     NAME_IN_URL = 'credencegoodsBJS'
     PLAYERS_PER_GROUP = 2  # Pairs of A and B
-    NUM_ROUNDS = 16  # change to 16 for real session.
+    NUM_ROUNDS = 16  # lower this number for testing.
 
     MARKET_SIZE = 8  # players per matching group (“market”)
 
@@ -25,6 +25,11 @@ class C(BaseConstants):
     # Price limits
     MIN_PRICE = 2
     MAX_PRICE = 9 # changed from 10 to 9 to avoid a possibility of negative payoffs
+    PRICE_VECTORS = [
+        (2, 3),
+        (2, 7),
+        (4, 7),
+    ]
 
 
 class Subsession(BaseSubsession):
@@ -51,6 +56,15 @@ class Player(BasePlayer):
         max=C.MAX_PRICE,
         label="Prix 2"
     )
+    price_choice = models.StringField(
+        choices=[
+            ('2-3', 'Prix 1 : 2 points, Prix 2 : 3 points'),
+            ('2-7', 'Prix 1 : 2 points, Prix 2 : 7 points'),
+            ('4-7', 'Prix 1 : 4 points, Prix 2 : 7 points'),
+        ],
+        widget=widgets.RadioSelect,
+        label="Sélectionnez la paire de prix à proposer"
+    )
     action_chosen = models.IntegerField(
         choices=[[1, 'Action 1'], [2, 'Action 2']],
         label="Choisissez une action",
@@ -75,9 +89,9 @@ class Player(BasePlayer):
     ])
     cq_q2 = models.StringField(label="Question 2. Quel est l'ordre correct des décisions pendant un tour ?",
     choices=[
-        ['A', "1) Le Joueur A propose deux prix, 2) Le Joueur B décide s'il interagit ou non, 3) Le Joueur A observe le type du Joueur B et choisit une action, 4) Le Joueur A paye l'un des prix proposés au Joueur B"],
-        ['B', "1) Le Joueur B décide s'il interagit ou non, 2) Le Joueur A propose deux prix, 3) Le Joueur A observe le type du Joueur B et choisit une action, 4) Le Joueur B paye au Joueur A le prix de l'action choisie"],
-        ['C', "1) Le Joueur A décide s'il interagit ou non, 2) Le Joueur A propose deux prix, 3) Le Joueur B choisit une action, 4) Le Joueur B reçoit un revenu"],
+        ['A', "1) Le Joueur A propose deux prix, 2) Le Joueur B décide s'il interagit ou non, 3) Le Joueur A observe le type du Joueur B et choisit une action, et 4) Le Joueur A paye l'un des prix proposés au Joueur B"],
+        ['B', "1) Le Joueur B décide s'il interagit ou non, 2) Le Joueur A propose deux prix, 3) Le Joueur A observe le type du Joueur B et choisit une action, et 4) Le Joueur B paye au Joueur A le prix de l'action choisie"],
+        ['C', "1) Le Joueur A décide s'il interagit ou non, 2) Le Joueur A propose deux prix, 3) Le Joueur B choisit une action, et 4) Le Joueur B reçoit un revenu"],
     ])
     cq_q3 = models.StringField(label="Question 3. Quelle est la bonne réponse concernant les types du Joueur B ?",
     choices=[
@@ -85,12 +99,12 @@ class Player(BasePlayer):
         ['B', 'Le Joueur B est toujours de Type 2'],
         ['C', 'Le type du Joueur B, Type 1 ou Type 2, est attribué aléatoirement à chaque tour'],
     ])
-    cq_q4 = models.StringField(label="Question 4. Question 4. Qu'est-ce qui est FAUX à propos du profit des joueurs ?",
+    cq_q4 = models.StringField(label="Question 4. Qu'est-ce qui est FAUX à propos du profit des joueurs ?",
     choices=[
         ['A', 'Les deux joueurs reçoivent toujours la même quantité de points'],
         ['B', 'Les deux joueurs reçoivent la même quantité de points, c\'est-à-dire 1 point, dans le cas où le Joueur B décide de ne pas interagir'],
-        ['C', 'Le profit du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
-        ['D', 'Le profit du Joueur B est défini par les prix payés par le Joueur A.'],
+        ['C', 'Le gaing du Joueur A dépend du type du Joueur B et des actions du Joueur A'],
+        ['D', 'Le gain du Joueur B est défini par les prix payés par le Joueur A.'],
     ])
     # Game state variables
     player_b_type = models.IntegerField()  # 1 or 2, randomly assigned
@@ -308,6 +322,8 @@ def price_paid_choices(player: Player):
 
 # PAGES
 class Welcome(Page):
+    next_button_text = 'Suivant'
+
     @staticmethod
     def is_displayed(player: Player):
         return player.round_number == 1
@@ -362,35 +378,43 @@ class RoleAssignment(Page):
 
 class PriceOffer(Page):
     form_model = 'player'
-    form_fields = ['price1_offer', 'price2_offer']
-    
+    form_fields = ['price_choice']
+
     @staticmethod
     def is_displayed(player: Player):
         role = player.player_role
         if role is None:
             raise RuntimeError(f"Player {player.id_in_subsession} missing role at PriceOffer in round {player.round_number}.")
         return role == 'A'
-    
+
     @staticmethod
     def error_message(player: Player, values):
-        if values['price1_offer'] > values['price2_offer']:
-            return 'Le prix 1 doit être inférieur ou égal au prix 2.'
-    
+        if values.get('price_choice') not in {'2-3', '2-7', '4-7'}:
+            return 'Veuillez sélectionner une paire de prix.'
+
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
-        # Store prices for partner to see
+        choice = player.price_choice
+        if choice is None:
+            raise RuntimeError("Aucune paire de prix sélectionnée.")
+        mapping = {
+            '2-3': (2, 3),
+            '2-7': (2, 7),
+            '4-7': (4, 7),
+        }
+        if choice not in mapping:
+            raise RuntimeError(f"Paire de prix inconnue : {choice}")
+        price1, price2 = mapping[choice]
+        player.price1_offer = price1
+        player.price2_offer = price2
         partner = player.set_partner()
-        price1 = player.field_maybe_none('price1_offer')
-        price2 = player.field_maybe_none('price2_offer')
-        if price1 is None or price2 is None:
-            raise RuntimeError("Price offers must be submitted before leaving PriceOffer page.")
         partner.partner_price1 = price1
         partner.partner_price2 = price2
 
 
 class WaitForPrices(WaitPage):
     title_text = "En attente"
-    body_text = "Veuillez patienter pendant que le Joueur A fixe les prix."
+    body_text = "Merci de patienter le temps que le joueur A définisse les prix…"
     wait_for_all_groups = False
 
     @staticmethod
@@ -502,6 +526,10 @@ class WaitForAction(WaitPage):
             raise RuntimeError("Player B interaction decision missing before WaitForAction.")
         if interaction and buyer.player_b_type is None:
             raise RuntimeError("Player A missing player_b_type before WaitForAction.")
+        if interaction:
+            action = buyer.field_maybe_none('action_chosen')
+            if action not in [1, 2]:
+                raise RuntimeError("Player A action choice missing before WaitForAction.")
 
 class ActionChoice(Page):
     form_model = 'player'
@@ -524,7 +552,8 @@ class ActionChoice(Page):
 
     @staticmethod
     def error_message(player: Player, values):
-        if values.get('action_chosen') is None:
+        choice = values.get('action_chosen')
+        if choice not in [1, 2]:
             return 'Veuillez sélectionner une action avant de continuer.'
 
     @staticmethod
@@ -563,11 +592,13 @@ class ActionChoice(Page):
             'player_b_type': player_b_type,
             'interaction': interaction,
             'action_info': action_info,
+            'price1_offer': player.field_maybe_none('price1_offer'),
+            'price2_offer': player.field_maybe_none('price2_offer'),
         }
 
 
 class WaitForPricePayment(WaitPage):
-    title_text = "En attente de la décision de paiement"
+    title_text = "Patientez"
     body_text = "Merci de patienter le temps que le Joueur A choisisse quel prix il souhaite payer."
     wait_for_all_groups = False
 
