@@ -1,0 +1,20 @@
+{% extends "global/Page.html" %}
+
+{% block title %}Tour {{ player.round_number }}: Offre de prix{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Définissez des prix </h4>
+        <p class="card-text">
+            Vous êtes le Joueur A. Veuillez choisir la paire de prix que vous proposerez au Joueur B.
+            
+        </p>
+        <div class="mb-3">
+            {{ form.price_choice }}
+        </div>
+        {{ next_button }}
+    </div>
+</div>
+{% endblock %}
+

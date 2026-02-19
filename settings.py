@@ -11,6 +11,11 @@ SESSION_CONFIGS = [
         app_sequence=['credencegoodsBJS_Exo','demographics'],
         num_demo_participants=16,
     ),
+    dict(
+        name='credencegoods_verifiability',
+        app_sequence=['credencegoodsBJS_verifiability','demographics'],
+        num_demo_participants=8,
+    ),
 ]
 
 # if you set a property in SESSION_CONFIG_DEFAULTS, it will be inherited by all configs

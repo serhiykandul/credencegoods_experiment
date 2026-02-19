@@ -1,0 +1,67 @@
+{% extends "global/Page.html" %}
+
+{% block title %}Tour {{ player.round_number }}: Résultats{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Résultats du tour</h4>
+        
+        {% if player_role == 'A' %}
+            <p class="card-text">Ce tour est fini.</p>
+            <p class="card-text">
+                Vous avez offert le Prix 1 = <strong>{{ price1_offer }}</strong> points et le Prix 2 = <strong>{{ price2_offer }}</strong> points au Joueur B.
+            </p>
+            <p class="card-text">
+                Le Joueur B a choisi <strong>{{ interaction_text }}</strong> avec vous.
+            </p>
+            
+            {% if interaction %}
+                {% if action_chosen %}
+                <p class="card-text">
+                    Vous avez choisi l'Action {{ action_chosen }}{% if has_price_paid %} et payé automatiquement {{ price_paid }} points{% endif %}.
+                </p>
+                <p class="card-text">
+                    {% if has_revenue %}Votre revenu : <strong>{{ revenue }}</strong> points<br>{% endif %}
+                    {% if action_cost %}Coût de l'Action : <strong>{{ action_cost }}</strong> point(s)<br>{% endif %}
+                    {% if has_price_paid %}Prix payé : <strong>{{ price_paid }}</strong> points<br>{% endif %}
+                </p>
+                {% endif %}
+                <p class="card-text">
+                    <strong>Votre gain pour ce tour : {{ payoff }}</strong>
+                </p>
+            {% else %}
+                <p class="card-text">
+                    <strong>Votre gain pour ce tour : {{ outside_option }} point</strong> (option de sortie)
+                </p>
+            {% endif %}
+        {% else %}
+            <p class="card-text">Ce tour est fini.</p>
+            <p class="card-text">
+                Le Joueur A vous a offert le Prix 1 = <strong>{{ price1_offer }}</strong> points et le Prix 2 = <strong>{{ price2_offer }}</strong> points.
+            </p>
+            <p class="card-text">
+                Vous avez choisi <strong>{{ interaction_text }}</strong> avec le Joueur A.
+            </p>
+            
+            {% if interaction %}
+                {% if has_price_paid %}
+                <p class="card-text">
+                    Le Joueur A vous a payé (fixé) <strong>{{ price_paid }}</strong> points.
+                </p>
+                {% endif %}
+                <p class="card-text">
+                    <strong>Votre gain pour ce tour : {{ payoff }}</strong>
+                </p>
+            {% else %}
+                <p class="card-text">
+                    <strong>Votre gain pour ce tour : {{ outside_option }} point</strong> (option de sortie)
+                </p>
+            {% endif %}
+        {% endif %}
+        
+        {{ next_button }}
+    </div>
+</div>
+{% endblock %}
+

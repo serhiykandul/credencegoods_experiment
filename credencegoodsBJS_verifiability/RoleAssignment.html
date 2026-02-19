@@ -1,0 +1,15 @@
+{% extends "global/Page.html" %}
+
+{% block title %}Attribution des rôles{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <p class="card-text">
+            Votre rôle est : <strong>{{ player_role }}</strong>.
+        </p>
+        {{ next_button }}
+    </div>
+</div>
+{% endblock %}
+

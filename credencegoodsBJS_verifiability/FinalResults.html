@@ -1,0 +1,23 @@
+{% extends "global/Page.html" %}
+
+{% block title %}Résultats finaux{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Résultats finaux</h4>
+        <p class="card-text">
+            Paiement total : <strong>{{ total_payment_rounded }}</strong> EUR<br>
+            Paiement pour la session : <strong>{{ total_euros_rounded }}</strong> EUR<br>
+            Paiement participation : <strong>{{ participation_fee_rounded }}</strong> EUR
+        </p>
+        <h5 class="mt-3">Récapitulatif des tours</h5>
+        <ul>
+            {% for r in rounds %}
+            <li>Tour {{ r.round_number }} : {{ r.round_payoff }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
