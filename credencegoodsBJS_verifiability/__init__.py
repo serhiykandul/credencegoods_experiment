@@ -60,7 +60,11 @@ class Player(BasePlayer):
     price_paid = models.IntegerField(blank=True)
 
     # Decisions
-    action_chosen = models.IntegerField(choices=[[1, "Action 1"], [2, "Action 2"]], blank=True)
+    action_chosen = models.IntegerField(
+        choices=[[1, "Action 1"], [2, "Action 2"]],
+        blank=True,
+        label=""
+    )
     interaction = models.BooleanField(choices=[[True, "Oui"], [False, "Non"]])
 
     # Control quiz

@@ -19,7 +19,7 @@
             {% if interaction %}
                 {% if action_chosen %}
                 <p class="card-text">
-                    Vous avez choisi l'Action {{ action_chosen }}{% if has_price_paid %} et payé automatiquement {{ price_paid }} points{% endif %}.
+                    Vous avez choisi l'Action {{ action_chosen }}.
                 </p>
                 <p class="card-text">
                     {% if has_revenue %}Votre revenu : <strong>{{ revenue }}</strong> points<br>{% endif %}
@@ -47,7 +47,7 @@
             {% if interaction %}
                 {% if has_price_paid %}
                 <p class="card-text">
-                    Le Joueur A vous a payé (fixé) <strong>{{ price_paid }}</strong> points.
+                    Le Joueur A vous a payé <strong>{{ price_paid }}</strong> points.
                 </p>
                 {% endif %}
                 <p class="card-text">

@@ -6,12 +6,9 @@
 <div class="card">
     <div class="card-body">
         <h4 class="card-title">Choisissez une action</h4>
-        <p class="card-text">
-            {% if player_b_type %}
+            <p class="card-text">
                 <strong>Le joueur B est du Type {{ player_b_type }}</strong>.
-            {% else %}
-                <strong>Le joueur B est du Type ?</strong>.
-            {% endif %}
+            </p>
         </p>
         <div class="alert alert-info">
             <p class="mb-2"><strong>Informations sur les revenus :</strong></p>
@@ -20,10 +17,15 @@
                 <li>Si le Joueur B est de Type 1 et que vous choisissez l'Action 2, votre revenu est de {{ C.REVENUE_2 }} points.</li>
                 <li>Si le Joueur B est de Type 2 et que vous choisissez l'Action 1 ou l'Action 2, votre revenu est de {{ C.REVENUE_2 }} points.</li>
             </ul>
-            <p class="mb-2"><strong>Prix proposés pour ce tour :</strong></p>
+            <p class="mb-2"><strong>Le prix pour ce tour :</strong></p>
             <ul class="mb-3">
-                <li>Prix 1 : {{ price1_offer }} points</li>
-                <li>Prix 2 : {{ price2_offer }} points</li>
+                {% if player_b_type == 1 %}
+                    <li>Prix payé pour un Joueur B: {{ price1_offer }} points.</li>
+                {% elif player_b_type == 2 %}
+                    <li>Prix payé pour un Joueur B : {{ price2_offer }} points.</li>
+                {% else %}
+                    <li>Type du Joueur B non défini pour ce tour.</li>
+                {% endif %}
             </ul>
             <p class="mb-2"><strong>Coût des actions :</strong></p>
             <ul class="mb-0">
@@ -31,6 +33,7 @@
                 <li>Action 2 : coût de {{ C.ACTION_2_COST }} points.</li>
             </ul>
         </div>
+        <p class="mb-2"><strong>Choix de l'Action:</strong></p>
         {{ formfield 'action_chosen' }}
         {{ next_button }}
     </div>
